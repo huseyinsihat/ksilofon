@@ -728,28 +728,42 @@
                 this.startSurvey('post');
             },
 
+            // --- VERİ GÖNDERME (BULUT) ---
             generateReport: function() {
-                let csv = "\uFEFFTarih,Isim,Yas,Sinif,Cinsiyet,Mod,Hedef,Calinan,Sonuc,Tepki_Suresi(ms),On_Anket,Son_Anket\n";
-                const u = this.user;
-                const pre = u.pre.join(';');
-                const post = u.post.join(';');
-                
-                u.logs.forEach(l => {
-                    csv += `${l.time},${u.name},${u.age},${u.class},${u.gender},${l.mode},${l.target},${l.played},${l.result},${l.latency},${pre},${post}\n`;
-                });
+                // SADECE BURAYI DEĞİŞTİR: Kendi Google Script Linkini tırnak içine yapıştır
+                const GOOGLE_SCRIPT_URL = "BURAYA_KOPYALADIGIN_UZUN_LINKI_YAPISTIR";
 
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `TUBITAK_Veri_${u.name}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                alert("Veriler başarıyla indirildi!");
-                localStorage.removeItem('xylophone_bak_' + u.name);
-                location.reload();
+                const loadingBtn = document.querySelector('#screen-survey button');
+                loadingBtn.innerText = "Gönderiliyor...";
+                loadingBtn.disabled = true;
+
+                // Veri Paketi Hazırla
+                const payload = {
+                    name: this.data.name,
+                    age: this.data.age,
+                    class: this.data.class,
+                    gender: this.data.gender,
+                    preAns: this.data.preAns,
+                    postAns: this.data.postAns,
+                    logs: this.data.logs
+                };
+
+                // Google'a Gönder
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Google Script için bu mod gereklidir
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    alert("✅ Veriler Başarıyla Öğretmenine Gönderildi!");
+                    localStorage.removeItem('ksilofon_user_' + this.data.name);
+                    location.reload();
+                }).catch(err => {
+                    alert("⚠️ Gönderim hatası oluştu. Lütfen tekrar dene.");
+                    loadingBtn.innerText = "Tekrar Dene";
+                    loadingBtn.disabled = false;
+                    console.error(err);
+                });
             },
 
             showScreen: function(id) {
