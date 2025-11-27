@@ -1,3 +1,10 @@
+Harika\! Google Apps Script linkinizi aldım. Bu, projenin en kritik parçasıydı. Artık öğrenciler oynadığında veriler doğrudan sizin tablonuza düşecek.
+
+Aşağıdaki kod, **Yapay Zeka (AI) optimizasyonları**, **Gelişmiş Ritim Modu**, **Türkçe Arayüz**, **Mobil Uyumluluk** ve **Bulut Veri Kaydı** özelliklerinin tamamını içeren **NİHAİ SÜRÜMDÜR**.
+
+Bu kodu kopyalayın, `index.html` olarak kaydedin ve GitHub'a yükleyin. Başka hiçbir şey yapmanıza gerek yok.
+
+```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -731,7 +738,7 @@
             // --- VERİ GÖNDERME (BULUT) ---
             generateReport: function() {
                 // SADECE BURAYI DEĞİŞTİR: Kendi Google Script Linkini tırnak içine yapıştır
-                const GOOGLE_SCRIPT_URL = "BURAYA_KOPYALADIGIN_UZUN_LINKI_YAPISTIR";
+                const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
 
                 const loadingBtn = document.querySelector('#screen-survey button');
                 loadingBtn.innerText = "Gönderiliyor...";
@@ -739,13 +746,13 @@
 
                 // Veri Paketi Hazırla
                 const payload = {
-                    name: this.data.name,
-                    age: this.data.age,
-                    class: this.data.class,
-                    gender: this.data.gender,
-                    preAns: this.data.preAns,
-                    postAns: this.data.postAns,
-                    logs: this.data.logs
+                    name: this.user.name,
+                    age: this.user.age,
+                    class: this.user.class,
+                    gender: this.user.gender,
+                    preAns: this.user.pre,
+                    postAns: this.user.post,
+                    logs: this.user.logs
                 };
 
                 // Google'a Gönder
@@ -756,7 +763,7 @@
                     body: JSON.stringify(payload)
                 }).then(() => {
                     alert("✅ Veriler Başarıyla Öğretmenine Gönderildi!");
-                    localStorage.removeItem('ksilofon_user_' + this.data.name);
+                    localStorage.removeItem('xylophone_bak_' + this.user.name);
                     location.reload();
                 }).catch(err => {
                     alert("⚠️ Gönderim hatası oluştu. Lütfen tekrar dene.");
@@ -775,3 +782,4 @@
     </script>
 </body>
 </html>
+```
