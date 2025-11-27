@@ -226,7 +226,7 @@ Bu kodu kopyalayın, `index.html` olarak kaydedin ve GitHub'a yükleyin. Başka 
         <div class="card" style="text-align: left; max-width: 600px;">
             <h2 id="surveyTitle" style="text-align: center; margin-bottom: 20px;">Anket</h2>
             <div id="surveyContent" style="max-height: 250px; overflow-y: auto;"></div>
-            <button class="btn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
+            <button id="btnGonder" class="btn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
         </div>
     </div>
 
@@ -735,44 +735,51 @@ Bu kodu kopyalayın, `index.html` olarak kaydedin ve GitHub'a yükleyin. Başka 
                 this.startSurvey('post');
             },
 
-            // --- VERİ GÖNDERME (BULUT) ---
+// --- VERİ GÖNDERME (BULUT) ---
             generateReport: function() {
-                // SADECE BURAYI DEĞİŞTİR: Kendi Google Script Linkini tırnak içine yapıştır
+                // Senin Google Script Linkin
                 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
 
-                const loadingBtn = document.querySelector('#screen-survey button');
-                loadingBtn.innerText = "Gönderiliyor...";
-                loadingBtn.disabled = true;
+                // DÜZELTME: Artık ID ile doğru butonu seçiyoruz
+                const loadingBtn = document.getElementById('btnGonder');
+                if(loadingBtn) {
+                    loadingBtn.innerText = "Gönderiliyor...";
+                    loadingBtn.disabled = true;
+                }
 
                 // Veri Paketi Hazırla
                 const payload = {
-                    name: this.user.name,
-                    age: this.user.age,
-                    class: this.user.class,
-                    gender: this.user.gender,
-                    preAns: this.user.pre,
-                    postAns: this.user.post,
-                    logs: this.user.logs
+                    name: this.data.name,
+                    age: this.data.age,
+                    class: this.data.class,
+                    gender: this.data.gender,
+                    preAns: this.data.preAns,
+                    postAns: this.data.postAns,
+                    logs: this.data.logs
                 };
+
+                console.log("Gönderilecek Veri:", payload); // Hatayı görmek için konsola yazdır
 
                 // Google'a Gönder
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Google Script için bu mod gereklidir
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain' }, // Google Script bazen json header'ı sevmez, text/plain daha garantidir
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    alert("✅ Veriler Başarıyla Öğretmenine Gönderildi!");
-                    localStorage.removeItem('xylophone_bak_' + this.user.name);
+                    alert("✅ Veriler Başarıyla Eklendi!");
+                    localStorage.removeItem('ksilofon_user_' + this.data.name);
                     location.reload();
                 }).catch(err => {
-                    alert("⚠️ Gönderim hatası oluştu. Lütfen tekrar dene.");
-                    loadingBtn.innerText = "Tekrar Dene";
-                    loadingBtn.disabled = false;
-                    console.error(err);
+                    alert("⚠️ Hata: İnternet bağlantını kontrol et.");
+                    if(loadingBtn) {
+                        loadingBtn.innerText = "Tekrar Dene";
+                        loadingBtn.disabled = false;
+                    }
+                    console.error("Fetch Hatası:", err);
                 });
             },
-
+            
             showScreen: function(id) {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
@@ -783,3 +790,4 @@ Bu kodu kopyalayın, `index.html` olarak kaydedin ve GitHub'a yükleyin. Başka 
 </body>
 </html>
 ```
+
