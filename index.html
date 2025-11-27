@@ -2,15 +2,16 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#2c3e50">
     <title>Akıllı Ksilofon - TÜBİTAK 2204</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. TASARIM SİSTEMİ --- */
+        /* --- 1. SIFIRLAMA VE TEMEL AYARLAR --- */
         :root {
             --bg-gradient: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
-            --glass: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.15); /* Cam efekti artırıldı */
             --border: 1px solid rgba(255, 255, 255, 0.2);
             --text: #ffffff;
             --accent: #f1c40f;
@@ -24,10 +25,20 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; font-family: 'Nunito', sans-serif; }
         
+        /* Dark Mode Engeli: Telefonun ayarı ne olursa olsun renkleri koru */
+        :root { color-scheme: light; }
+
         body {
             background: var(--bg-gradient); color: var(--text);
-            height: 100vh; width: 100vw; overflow: hidden;
+            height: 100vh; height: 100svh; /* Mobil tarayıcı çubuğu sorunu çözümü (Small Viewport Height) */
+            width: 100vw; overflow: hidden;
             display: flex; flex-direction: column;
+            /* iPhone Çentik (Notch) Koruması */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            /* Sayfa yenileme (Pull-to-refresh) engeli */
+            overscroll-behavior: none;
+            touch-action: manipulation;
         }
 
         /* --- 2. CİHAZ YÖNÜ UYARISI --- */
@@ -39,117 +50,125 @@
         }
         .rotate-icon { font-size: 4rem; animation: spin 2s infinite ease-in-out; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+        /* Sadece dikey modda göster */
         @media screen and (orientation: portrait) { #orientation-lock { display: flex; } }
 
-        /* --- 3. EKRANLAR VE DÜZEN --- */
+        /* --- 3. EKRAN DÜZENİ --- */
         .screen {
             display: none; flex: 1; flex-direction: column;
             align-items: center; justify-content: center;
             width: 100%; height: 100%; 
-            padding: 15px;
-            overflow-y: auto; /* Mobilde sığmazsa kaydırma aç */
-            -webkit-overflow-scrolling: touch;
-            animation: fadeUp 0.4s ease-out;
+            padding: 10px;
+            overflow-y: auto; /* Sığmazsa kaydır */
+            animation: fadeUp 0.3s ease-out;
         }
         .screen.active { display: flex; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 4. KART VE FORM --- */
+        /* --- 4. KART TASARIMI (Login & Anket) --- */
         .card {
-            background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: var(--border); border-radius: 20px; padding: 25px;
+            background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: var(--border); border-radius: 16px; padding: 20px;
             width: 95%; max-width: 500px; text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            margin: auto; /* Dikey ortalama */
-            flex-shrink: 0; /* Küçülmesini engelle */
-            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            flex-shrink: 0; transition: all 0.3s ease;
         }
 
         .input-box {
-            width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 10px;
-            background: rgba(255,255,255,0.9); font-size: 1rem; color: #333; font-weight: 700;
+            width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px;
+            background: rgba(255,255,255,0.95); font-size: 1rem; color: #333; font-weight: 700;
+            outline: none;
         }
+        .input-box:focus { box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.5); }
 
         .btn {
             background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white; border: none; padding: 12px 24px; border-radius: 50px;
+            color: white; border: none; padding: 12px; border-radius: 50px;
             font-size: 1.1rem; font-weight: 800; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); margin-top: 15px; width: 100%;
-            transition: transform 0.1s;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); margin-top: 10px; width: 100%;
+            transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn:active { transform: scale(0.96); }
+        .btn:active { transform: scale(0.97); }
         .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .btn-red { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); }
-        .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); box-shadow: none; margin-top: 5px;}
+        .btn-outline { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: none; margin-top: 0;}
+        .btn-outline.selected { background: var(--accent); color: #333; border-color: var(--accent); }
 
-        /* --- 5. MOBİL OPTİMİZASYONU (YATAY EKRAN) --- */
-        /* Telefon yataydayken yükseklik çok azdır, her şeyi sıkıştırıyoruz */
+        /* --- 5. İDEAL MOBİL OPTİMİZASYONU (Yatay & Dar Ekran) --- */
         @media screen and (orientation: landscape) and (max-height: 500px) {
-            .card {
+            /* Login ekranını süper kompakt yap */
+            #screen-login .card {
                 padding: 10px 15px;
-                display: flex; flex-direction: row; flex-wrap: wrap; /* Yan yana dizilim */
-                justify-content: center; align-items: center; gap: 8px;
-                max-width: 650px; /* Genişliği artır */
+                display: flex; flex-direction: row; flex-wrap: wrap; /* Yan yana diz */
+                align-items: center; justify-content: center; gap: 8px;
+                max-width: 700px;
             }
-            .card img { width: 35px !important; height: 35px !important; margin: 0 10px 0 0 !important; } /* Logo küçülür */
-            .card h1 { font-size: 1.1rem; margin: 0; width: auto; } /* Başlık küçülür */
-            .card p { display: none; } /* Alt açıklama gizlenir */
+            /* Logoyu ve Alt Başlığı GİZLE (Yer kazanmak için en önemli adım) */
+            #screen-login .logo-img, #screen-login .sub-title { display: none !important; }
+            #screen-login h1 { font-size: 1.2rem; width: 100%; margin: 0; display: none; } /* Başlığı da gizle, sadece form kalsın */
             
-            /* Form elemanlarını yan yana al */
-            .input-group-row { width: 100%; display: flex; gap: 10px; justify-content: center; }
-            .input-box { padding: 8px; margin: 2px; font-size: 0.9rem; flex: 1; }
+            /* Form elemanlarını yan yana diz */
+            .form-row { display: flex; width: 100%; gap: 8px; }
+            .input-box { margin: 0; padding: 8px; font-size: 0.9rem; }
             
-            /* Butonları sıkıştır */
-            .gender-row { width: 100%; display: flex; justify-content: center; gap: 5px; margin: 2px 0 !important; }
-            .gender-row button { padding: 5px 15px; font-size: 0.9rem; margin: 0; width: auto !important; }
-            
-            .btn-green { padding: 8px; font-size: 1rem; margin-top: 5px; width: 100%; }
+            /* Butonlar */
+            .gender-group { width: auto !important; flex: 1; display: flex; gap: 5px; margin: 0 !important; }
+            .btn { padding: 8px; font-size: 1rem; margin: 0; width: 100%; }
         }
 
-        /* --- 6. OYUN ALANI GÖRSELLERİ --- */
+        /* --- 6. ANKET İYİLEŞTİRMESİ (Emoji Butonları) --- */
+        .survey-item { margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; }
+        .survey-q { font-weight: bold; margin-bottom: 8px; font-size: 1rem; }
+        .survey-opts { display: flex; justify-content: space-between; gap: 8px; }
+        .opt-btn { 
+            flex: 1; font-size: 1.5rem; padding: 5px; 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .opt-btn.active { background: var(--accent); transform: scale(1.1); border-color: white; }
+
+        /* --- 7. OYUN ALANI --- */
         .top-bar {
             width: 100%; display: flex; justify-content: space-between; align-items: center;
-            padding: 5px 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1);
-            height: 50px;
+            padding: 5px 15px; background: rgba(0,0,0,0.3); 
+            height: 40px; flex-shrink: 0;
         }
-        .stat-pill {
-            background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px;
-            font-size: 0.8rem; font-weight: bold;
-        }
+        .stat-pill { background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
         
         .stage {
             flex: 1; width: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; position: relative;
         }
         .target-bubble {
-            width: 100px; height: 100px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); border: 5px solid rgba(255,255,255,0.2);
+            width: 90px; height: 90px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 4px solid rgba(255,255,255,0.3);
             display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-weight: 900; color: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.3);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 2.2rem; font-weight: 900; color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
         }
-        .target-bubble.active { transform: scale(1.1); border-color: white; color: #333; }
-        .instruction { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .target-bubble.active { transform: scale(1.2); border-color: white; background: rgba(255,255,255,0.2); }
+        .instruction { font-size: 1.2rem; font-weight: 800; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
 
-        /* --- 7. TUŞLAR (PİYANO/KSİLOFON) --- */
+        /* --- 8. TUŞLAR (Responsive Yükseklik) --- */
         .keys-area {
-            width: 100%; height: 45%; display: flex; gap: 4px; padding: 0 5px 5px 5px;
-            align-items: flex-start;
+            width: 100%; height: 45%; /* Ekranın %45'i tuşlara ayrıldı */
+            display: flex; gap: 4px; padding: 0 5px 5px 5px;
+            align-items: flex-start; flex-shrink: 0;
         }
         .key {
             flex: 1; height: 100%; position: relative; cursor: pointer;
-            border-radius: 0 0 10px 10px; background: #ccc;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
-            transition: transform 0.05s, box-shadow 0.05s, filter 0.1s;
+            border-radius: 0 0 8px 8px; background: #ccc;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3), inset 0 2px 3px rgba(255,255,255,0.4);
             display: flex; align-items: flex-end; justify-content: center;
-            padding-bottom: 10px; font-weight: 900; font-size: 1rem;
+            padding-bottom: 8px; font-weight: 900; font-size: 0.9rem;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5); overflow: hidden;
+            touch-action: none; /* Kaydırmayı engeller, hızlı tepki verir */
         }
-        .key::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 40%; background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent); }
-        .key:active, .key.pressed { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.3); filter: brightness(1.3); }
-        .key.locked { filter: grayscale(0.8) brightness(0.7); pointer-events: none; }
+        .key:active, .key.pressed { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.3); filter: brightness(1.2); }
+        .key.locked { filter: grayscale(0.9); opacity: 0.7; pointer-events: none; }
 
+        /* Tuş Renkleri */
         .key[data-note="do"] { background: var(--c-do); height: 100%; }
         .key[data-note="re"] { background: var(--c-re); height: 96%; }
         .key[data-note="mi"] { background: var(--c-mi); height: 92%; }
@@ -159,33 +178,32 @@
         .key[data-note="si"] { background: var(--c-si); height: 76%; }
         .key[data-note="do2"] { background: var(--c-do2); height: 72%; }
 
-        /* --- 8. MENÜ --- */
-        .menu-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-            width: 100%; max-width: 600px; margin-top: 10px;
-        }
-        .menu-item {
-            background: rgba(255,255,255,0.05); padding: 15px;
-            border-radius: 15px; cursor: pointer; text-align: center;
-            border: 2px solid transparent; transition: 0.2s;
-        }
-        .menu-item:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
-        .menu-icon { font-size: 2rem; display: block; margin-bottom: 5px; }
-
-        /* Flash Efekt */
-        #flash-layer { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 5; }
-        .flash-success { background: radial-gradient(circle, rgba(46,213,115,0.3) 0%, transparent 70%); }
-        .flash-error { background: radial-gradient(circle, rgba(255,71,87,0.3) 0%, transparent 70%); }
-        #confetti { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 10; }
+        /* --- MENÜ --- */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+        .menu-item { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; }
+        .menu-item:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); }
         
-        /* Şarkı Listesi */
+        /* Şarkı Satırı */
         .song-row {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 8px;
-            border-radius: 10px; cursor: pointer; border-left: 4px solid transparent;
+            background: rgba(255,255,255,0.1); padding: 12px; margin-bottom: 6px;
+            border-radius: 8px; cursor: pointer; border-left: 4px solid transparent;
         }
-        .song-row:hover { background: rgba(255,255,255,0.15); border-left-color: var(--accent); }
+        .song-row:hover { background: rgba(255,255,255,0.2); border-left-color: var(--accent); }
 
+        /* Efektler */
+        #flash-layer { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 5; }
+        .flash-success { background: radial-gradient(circle, rgba(46,213,115,0.4) 0%, transparent 70%); }
+        .flash-error { background: radial-gradient(circle, rgba(255,71,87,0.4) 0%, transparent 70%); }
+        #confetti { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 10; }
+
+        /* Tam Ekran Butonu */
+        #fullscreen-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 6px 12px; border-radius: 20px;
+            font-size: 0.75rem; cursor: pointer; backdrop-filter: blur(4px);
+        }
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
@@ -196,36 +214,33 @@
     <div id="orientation-lock">
         <div class="rotate-icon">📱</div>
         <h2>Telefonu Yan Çevirin</h2>
-        <p style="opacity: 0.7;">En iyi deneyim için yatay ekran gereklidir.</p>
     </div>
 
-    <div id="screen-login" class="screen active">
-        <button onclick="document.documentElement.requestFullscreen()" style="position:absolute; top:10px; left:10px; z-index:99; background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 10px; border-radius:5px; font-size:0.8rem; cursor:pointer;">
-            ⛶ Tam Ekran
-        </button>
+    <button id="fullscreen-btn" onclick="toggleFullScreen()">⛶ Tam Ekran</button>
 
+    <div id="screen-login" class="screen active">
         <div class="card">
-            <img src="logo.png" style="width: 70px; height: 70px; margin-bottom: 10px; display:inline-block;" onerror="this.style.display='none'">
+            <img src="logo.png" class="logo-img" style="width: 70px; height: 70px; margin-bottom: 5px;" onerror="this.style.display='none'">
+            <h1 style="margin-bottom: 5px;">Akıllı Ksilofon</h1>
+            <p class="sub-title" style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 15px;">TÜBİTAK 2204 Projesi</p>
             
-            <h1>Akıllı Ksilofon</h1>
-            <p>TÜBİTAK 2204 Projesi</p>
+            <div class="form-row">
+                <input type="text" id="uName" class="input-box" placeholder="Ad Soyad" style="flex: 2;">
+                <input type="tel" id="uAge" class="input-box" placeholder="Yaş" style="flex: 1;"> </div>
             
-            <div class="input-group-row">
-                <input type="text" id="uName" class="input-box" placeholder="İsim Soyisim" style="flex:2;">
-                <input type="number" id="uAge" class="input-box" placeholder="Yaş" style="flex:1;">
-            </div>
-            
-            <select id="uClass" class="input-box">
-                <option value="">Sınıf Seçiniz</option>
-                <option value="5">5. Sınıf</option>
-                <option value="6">6. Sınıf</option>
-                <option value="7">7. Sınıf</option>
-                <option value="BILSEM">BİLSEM</option>
-            </select>
-            
-            <div class="gender-row" style="margin: 15px 0; width: 100%;">
-                <button class="btn btn-outline" style="width: 48%; display:inline-block;" onclick="App.setGender('Kız', this)">👧 Kız</button>
-                <button class="btn btn-outline" style="width: 48%; display:inline-block;" onclick="App.setGender('Erkek', this)">👦 Erkek</button>
+            <div class="form-row">
+                <select id="uClass" class="input-box" style="flex: 1.5;">
+                    <option value="">Sınıf</option>
+                    <option value="5">5. Sınıf</option>
+                    <option value="6">6. Sınıf</option>
+                    <option value="7">7. Sınıf</option>
+                    <option value="BILSEM">BİLSEM</option>
+                </select>
+                
+                <div class="gender-group" style="flex: 2; display: flex; gap: 5px; margin-left: 5px;">
+                    <button class="btn btn-outline" style="flex:1;" onclick="App.setGender('Kız', this)">👧</button>
+                    <button class="btn btn-outline" style="flex:1;" onclick="App.setGender('Erkek', this)">👦</button>
+                </div>
             </div>
 
             <button class="btn btn-green" onclick="App.login()">BAŞLA 🚀</button>
@@ -233,49 +248,46 @@
     </div>
 
     <div id="screen-survey" class="screen">
-        <div class="card" style="text-align: left; max-width: 600px;">
-            <h2 id="surveyTitle" style="text-align: center; margin-bottom: 20px;">Anket</h2>
-            <div id="surveyContent" style="max-height: 250px; overflow-y: auto;"></div>
-            <button class="btn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
+        <div class="card" style="text-align: left; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+            <h2 id="surveyTitle" style="text-align: center; margin-bottom: 10px; font-size: 1.2rem;">Anket</h2>
+            <div id="surveyContent" style="overflow-y: auto; padding-right: 5px; flex: 1;"></div>
+            <button class="btn" id="surveySubmitBtn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
         </div>
     </div>
 
     <div id="screen-menu" class="screen">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-            <h2 id="txtWelcome">Merhaba</h2>
-            <div id="ai-status" style="font-size:0.8rem; color:var(--accent);">🎤 AI Yükleniyor...</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:600px; margin-bottom:10px;">
+            <div>
+                <h2 id="txtWelcome" style="font-size:1.3rem;">Merhaba</h2>
+                <div id="ai-status" style="font-size:0.8rem; color:var(--accent);">🎤 AI Yükleniyor...</div>
+            </div>
+            <button class="btn btn-red btn-outline" style="width: auto; padding: 5px 15px; font-size: 0.8rem;" onclick="App.endSession()">Çıkış</button>
         </div>
 
-        <div class="menu-grid">
+        <div class="menu-grid" style="max-width: 600px;">
             <div class="menu-item" onclick="App.startMode('free')">
-                <span class="menu-icon">🎹</span>
-                <h3>Serbest Mod</h3>
-                <small>Özgürce Çal</small>
+                <span style="font-size: 2rem;">🎹</span>
+                <h3>Serbest</h3>
             </div>
             <div class="menu-item" onclick="App.startMode('reflex')">
-                <span class="menu-icon">⚡</span>
+                <span style="font-size: 2rem;">⚡</span>
                 <h3>Refleks</h3>
-                <small>Hızını Test Et</small>
             </div>
             <div class="menu-item" onclick="App.startMode('rhythm')">
-                <span class="menu-icon">🧠</span>
-                <h3>Ritim Hafıza</h3>
-                <small>Dinle ve Tekrarla</small>
+                <span style="font-size: 2rem;">🧠</span>
+                <h3>Hafıza</h3>
             </div>
             <div class="menu-item" onclick="App.showSongs()">
-                <span class="menu-icon">🎵</span>
+                <span style="font-size: 2rem;">🎵</span>
                 <h3>Şarkılar</h3>
-                <small>Eserleri Öğren</small>
             </div>
         </div>
-        
-        <button class="btn btn-red btn-outline" style="width:auto; margin-top:30px;" onclick="App.endSession()">🏁 Oturumu Bitir ve Çıkış</button>
     </div>
 
     <div id="screen-songs" class="screen">
-        <h2>Şarkı Kütüphanesi</h2>
-        <div id="songList" style="width:100%; max-width:600px; margin-top:20px; max-height:60vh; overflow-y:auto;"></div>
-        <button class="btn btn-outline" style="width:auto;" onclick="App.showScreen('screen-menu')">Geri Dön</button>
+        <h2 style="margin-bottom: 10px;">Şarkı Seç</h2>
+        <div id="songList" style="width:100%; max-width:600px; overflow-y:auto; flex:1;"></div>
+        <button class="btn btn-outline" style="width:auto; margin-top: 10px;" onclick="App.showScreen('screen-menu')">Geri</button>
     </div>
 
     <div id="screen-game" class="screen" style="padding:0; justify-content:flex-start;">
@@ -283,7 +295,7 @@
         <div id="flash-layer"></div>
 
         <div class="top-bar">
-            <button class="btn btn-red" style="width:auto; margin:0; padding:6px 12px; font-size:0.8rem;" onclick="App.quitGame()">ÇIKIŞ</button>
+            <button class="btn btn-red" style="width:auto; margin:0; padding:4px 12px; font-size:0.75rem;" onclick="App.quitGame()">ÇIKIŞ</button>
             <div class="stat-pill">MOD: <span id="hudMode">-</span></div>
             <div class="stat-pill" style="color:var(--accent);">PUAN: <span id="hudScore">0</span></div>
         </div>
@@ -291,14 +303,25 @@
         <div class="stage">
             <div id="txtInstr" class="instruction">Hazır mısın?</div>
             <div id="visualTarget" class="target-bubble">🎵</div>
-            <div id="feedbackTxt" style="height:20px; margin-top:10px; font-weight:bold; color:var(--success);"></div>
+            <div id="feedbackTxt" style="height:20px; margin-top:5px; font-weight:bold; color:var(--success);"></div>
         </div>
 
         <div class="keys-area" id="keysContainer"></div>
     </div>
 
     <script>
-        // --- A. SES MOTORU ---
+        // --- TAM EKRAN FONKSİYONU ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Hata: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // --- A. SES MOTORU (Polyphonic) ---
         const AudioEngine = {
             ctx: null,
             init: function() {
@@ -315,28 +338,30 @@
                 
                 const freqs = {'do':261.63,'re':293.66,'mi':329.63,'fa':349.23,'sol':392.00,'la':440.00,'si':493.88,'do2':523.25};
                 osc.frequency.value = freqs[note];
-                osc.type = 'sine'; 
+                osc.type = 'sine';
+                
+                // Yumuşak vuruş sesi (ADSR)
                 gain.gain.setValueAtTime(0, t);
-                gain.gain.linearRampToValueAtTime(0.8, t + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.0);
+                gain.gain.linearRampToValueAtTime(0.8, t + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.2);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start(t);
-                osc.stop(t + 1.0);
+                osc.stop(t + 1.2);
             }
         };
 
-        // --- B. İÇERİK VERİTABANI ---
+        // --- B. VERİ VE İÇERİK ---
         const SONGS = [
             { title: "Daha Dün Annemizin", level: "Kolay", notes: ['do','do','sol','sol','la','la','sol','fa','fa','mi','mi','re','re','do'] },
             { title: "Bak Postacı Geliyor", level: "Kolay", notes: ['sol','mi','mi','fa','re','re','do','re','mi','fa','sol','sol'] },
             { title: "İzmir Marşı", level: "Orta", notes: ['do','mi','sol','la','la','sol','mi','fa','re','mi','fa','sol'] },
-            { title: "23 Nisan Kutlu Olsun", level: "Zor", notes: ['sol','sol','la','sol','fa','mi','sol','sol','la','sol','fa','mi','re'] }
+            { title: "23 Nisan", level: "Zor", notes: ['sol','sol','la','sol','fa','mi','sol','sol','la','sol','fa','mi','re'] }
         ];
 
-        const PRE_SURVEY = ["Müzik derslerini sever misin?", "Daha önce ksilofon çaldın mı?", "Teknoloji ile müzik ilgini çekiyor mu?"];
-        const POST_SURVEY = ["Uygulamayı eğlenceli buldun mu?", "Reflekslerinin hızlandığını hissettin mi?", "Tekrar oynamak ister misin?"];
+        const PRE_SURVEY = ["Müzik derslerini seviyor musun?", "Daha önce enstrüman çaldın mı?", "Teknoloji ile müzik ilgini çekiyor mu?"];
+        const POST_SURVEY = ["Uygulamayı sevdin mi?", "Reflekslerinin hızlandığını hissettin mi?", "Tekrar oynamak ister misin?"];
 
         // --- C. EFEKT SİSTEMİ ---
         const FX = {
@@ -350,13 +375,16 @@
                 this.loop();
             },
             resize: function() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
+                // Retina ekranlar için piksel yoğunluğu ayarı
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = window.innerWidth * dpr;
+                this.canvas.height = window.innerHeight * dpr;
+                this.ctx.scale(dpr, dpr);
             },
             explode: function() {
-                for(let i=0; i<80; i++) {
+                for(let i=0; i<60; i++) {
                     this.particles.push({
-                        x: this.canvas.width/2, y: this.canvas.height/2,
+                        x: window.innerWidth/2, y: window.innerHeight/2,
                         vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
                         life: 1.0, color: `hsl(${Math.random()*360}, 100%, 50%)`
                     });
@@ -364,7 +392,7 @@
             },
             loop: function() {
                 if(!this.ctx) return;
-                this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+                this.ctx.clearRect(0,0, window.innerWidth, window.innerHeight); // Doğru temizleme
                 this.particles.forEach((p,i) => {
                     p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
                     this.ctx.globalAlpha = p.life;
@@ -376,7 +404,7 @@
             }
         };
 
-        // --- D. UYGULAMA MANTIĞI ---
+        // --- D. UYGULAMA ÇEKİRDEĞİ ---
         const App = {
             user: { name:'', age:'', gender:'', class:'', pre:[], post:[], logs:[] },
             game: { mode: null, score: 0, index: 0, song: null, locked: false, startT: 0, rhythmPattern: [] },
@@ -384,14 +412,16 @@
             // --- 1. Başlangıç ---
             setGender: function(g, btn) {
                 this.user.gender = g;
-                document.querySelectorAll('.btn-outline').forEach(b => b.style.backgroundColor = 'transparent');
-                btn.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                // Görsel seçim efekti
+                document.querySelectorAll('.gender-group .btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
             },
 
             login: function() {
                 const n = document.getElementById('uName').value;
                 const a = document.getElementById('uAge').value;
                 const c = document.getElementById('uClass').value;
+                
                 if(!n || !a || !c || !this.user.gender) { alert("Lütfen tüm alanları doldurunuz."); return; }
                 
                 this.user.name = n; this.user.age = a; this.user.class = c;
@@ -401,11 +431,14 @@
                 this.renderKeys();
                 this.initAI();
                 
-                document.getElementById('txtWelcome').innerText = `Merhaba, ${n}`;
+                document.getElementById('txtWelcome').innerText = `Merhaba, ${n.split(' ')[0]}`;
                 this.startSurvey('pre');
+                
+                // Otomatik Tam Ekran İsteği
+                if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
             },
 
-            // --- 2. Anket ---
+            // --- 2. Anket (İkonlu) ---
             startSurvey: function(type) {
                 this.game.surveyType = type;
                 document.getElementById('surveyTitle').innerText = type === 'pre' ? "Başlangıç Anketi" : "Bitiş Anketi";
@@ -415,17 +448,34 @@
                 
                 qs.forEach((q, i) => {
                     const d = document.createElement('div');
-                    d.innerHTML = `<p style="margin-top:15px; font-weight:bold;">${i+1}. ${q}</p>`;
-                    const opts = document.createElement('div');
-                    opts.style.display = 'flex'; opts.style.gap = '10px'; opts.style.marginTop = '5px';
+                    d.className = 'survey-item';
                     
-                    ['Evet', 'Kısmen', 'Hayır'].forEach(ans => {
-                        const b = document.createElement('button');
-                        b.className = 'btn btn-outline'; b.style.margin = '0'; b.innerText = ans; b.style.flex = '1';
+                    const qText = document.createElement('div');
+                    qText.className = 'survey-q';
+                    qText.innerText = `${i+1}. ${q}`;
+                    d.appendChild(qText);
+                    
+                    const opts = document.createElement('div');
+                    opts.className = 'survey-opts';
+                    
+                    // İkonlar: Evet, Kısmen, Hayır
+                    const icons = [
+                        { val: 'Evet', icon: '👍' },
+                        { val: 'Kısmen', icon: '😐' },
+                        { val: 'Hayır', icon: '👎' }
+                    ];
+
+                    icons.forEach(item => {
+                        const b = document.createElement('div');
+                        b.className = 'opt-btn';
+                        b.innerText = item.icon;
                         b.onclick = (e) => {
-                            Array.from(opts.children).forEach(k => k.style.background = 'transparent');
-                            e.target.style.background = '#f1c40f'; e.target.style.color = '#333';
-                            if(type === 'pre') this.user.pre[i] = ans; else this.user.post[i] = ans;
+                            // Seçim Efekti
+                            Array.from(opts.children).forEach(k => k.classList.remove('active'));
+                            b.classList.add('active');
+                            
+                            if(type === 'pre') this.user.pre[i] = item.val; 
+                            else this.user.post[i] = item.val;
                         };
                         opts.appendChild(b);
                     });
@@ -440,7 +490,11 @@
                 const arr = t === 'pre' ? this.user.pre : this.user.post;
                 const req = t === 'pre' ? PRE_SURVEY.length : POST_SURVEY.length;
                 
-                if(arr.length < req) { alert("Lütfen tüm soruları cevaplayın."); return; }
+                // Boş cevap kontrolü
+                let missing = 0;
+                for(let i=0; i<req; i++) if(!arr[i]) missing++;
+                
+                if(missing > 0) { alert("Lütfen tüm soruları işaretleyin."); return; }
                 
                 if(t === 'pre') this.showScreen('screen-menu');
                 else this.generateReport();
@@ -453,19 +507,19 @@
                 this.game.index = 0;
                 this.game.locked = false;
                 
-                document.getElementById('hudMode').innerText = mode.toUpperCase();
+                document.getElementById('hudMode').innerText = mode.toUpperCase().substring(0,3);
                 document.getElementById('hudScore').innerText = "0";
-                
                 document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
+                
                 this.showScreen('screen-game');
 
                 if(mode === 'free') {
-                    this.setVisual("Serbest Çalım", "🎹");
+                    this.setVisual("Serbest", "🎹");
                 } else if(mode === 'reflex') {
-                    this.setVisual("Hazırlan...", "⏳");
+                    this.setVisual("Hazır?", "⏳");
                     setTimeout(() => this.nextReflex(), 1500);
                 } else if(mode === 'rhythm') {
-                    this.setVisual("Dinle...", "👂");
+                    this.setVisual("Dinle", "👂");
                     this.game.rhythmPattern = this.generatePattern(3);
                     setTimeout(() => this.playPattern(), 1000);
                 }
@@ -477,7 +531,7 @@
                 SONGS.forEach(s => {
                     const row = document.createElement('div');
                     row.className = 'song-row';
-                    row.innerHTML = `<div><strong>${s.title}</strong><br><small>${s.level}</small></div><div>➤</div>`;
+                    row.innerHTML = `<div><strong>${s.title}</strong><br><small style="opacity:0.7">${s.level}</small></div><div>▶</div>`;
                     row.onclick = () => {
                         this.game.song = s;
                         this.startMode('song');
@@ -488,14 +542,15 @@
                 this.showScreen('screen-songs');
             },
 
-            // --- 4. Oyun Mantığı ---
+            // --- 4. Oyun Döngüsü ---
             handleInput: function(note, el, event) {
                 if(this.game.locked) return;
-                if(event) event.preventDefault();
+                if(event && event.cancelable) event.preventDefault(); // Scroll engelle
 
                 AudioEngine.play(note);
-                if(navigator.vibrate) navigator.vibrate(40);
+                if(navigator.vibrate) navigator.vibrate(30);
                 
+                // Basılma Efekti
                 el.classList.add('pressed');
                 setTimeout(() => el.classList.remove('pressed'), 150);
 
@@ -520,7 +575,7 @@
                         
                         if(this.game.index >= this.game.song.notes.length) {
                             FX.explode();
-                            this.setVisual("Şarkı Bitti!", "🎉");
+                            this.setVisual("Bitti!", "🎉");
                             setTimeout(() => this.showScreen('screen-menu'), 3000);
                             return;
                         }
@@ -550,14 +605,14 @@
                         this.game.index++;
                         if(this.game.index >= this.game.rhythmPattern.length) {
                             this.game.score += 500;
-                            this.showFeedback("Mükemmel!", true);
+                            this.showFeedback("Süper!", true);
                             FX.explode();
                             const nextLen = this.game.rhythmPattern.length + 1;
                             this.game.rhythmPattern = this.generatePattern(nextLen);
                             setTimeout(() => this.playPattern(), 1500);
                         }
                     } else {
-                        this.showFeedback("Hata! Tekrar...", false);
+                        this.showFeedback("Tekrar", false);
                         this.flash('error');
                         setTimeout(() => this.playPattern(), 1000);
                     }
@@ -579,7 +634,7 @@
                 const n = notes[Math.floor(Math.random()*notes.length)];
                 this.game.targetNote = n;
                 this.game.startT = Date.now();
-                this.setVisual("ŞİMDİ BAS!", n.toUpperCase());
+                this.setVisual("BAS!", n.toUpperCase());
                 this.highlightKey(n);
             },
 
@@ -593,7 +648,7 @@
             playPattern: function() {
                 this.game.index = 0;
                 this.game.locked = true;
-                this.setVisual("İzle ve Dinle", "👀");
+                this.setVisual("Dinle", "👀");
                 document.querySelectorAll('.key').forEach(k => k.classList.add('locked'));
 
                 let i = 0;
@@ -601,7 +656,7 @@
                     if(i >= this.game.rhythmPattern.length) {
                         this.game.locked = false;
                         document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
-                        this.setVisual("Sıra Sende!", "🫵");
+                        this.setVisual("Sen!", "🫵");
                         return;
                     }
                     const n = this.game.rhythmPattern[i];
@@ -615,7 +670,7 @@
                 setTimeout(playNext, 500);
             },
 
-            // --- UI ---
+            // --- Görsel UI ---
             renderKeys: function() {
                 const c = document.getElementById('keysContainer');
                 c.innerHTML = '';
@@ -638,7 +693,7 @@
                 const v = document.getElementById('visualTarget');
                 v.innerText = icon;
                 v.classList.remove('active');
-                void v.offsetWidth;
+                void v.offsetWidth; // Trigger reflow
                 v.classList.add('active');
                 
                 const map = {'DO':'#ff4757','RE':'#ffa502','Mİ':'#eccc68','FA':'#2ed573','SOL':'#1e90ff','LA':'#5352ed','Sİ':'#a55eea'};
@@ -663,10 +718,10 @@
                 const el = document.getElementById('feedbackTxt');
                 el.innerText = msg;
                 el.style.color = good ? '#2ecc71' : '#e74c3c';
-                setTimeout(() => el.innerText = '', 1000);
+                setTimeout(() => el.innerText = '', 800);
             },
 
-            // --- AI (TEACHABLE MACHINE) ---
+            // --- AI (Teachable Machine) ---
             ai: null,
             lastAiTime: 0,
             initAI: async function() {
@@ -705,13 +760,12 @@
                             }
                         }
                     }, { probabilityThreshold: 0.85, overlapFactor: 0.50 });
-
                 } catch(e) {
-                    document.getElementById('ai-status').innerText = "⚠️ Manuel Mod";
+                    document.getElementById('ai-status').innerText = "⚠️ Manuel";
                 }
             },
 
-            // --- Veri & Rapor ---
+            // --- Veri Kaydı ---
             logData: function(target, played, result, lat) {
                 this.user.logs.push({
                     time: new Date().toISOString(),
@@ -727,11 +781,12 @@
                 this.startSurvey('post');
             },
 
-            // --- VERİ GÖNDERME ---
+            // --- BULUT GÖNDERİMİ (Google Apps Script) ---
             generateReport: function() {
+                // SİZİN URL'NİZ
                 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
 
-                const loadingBtn = document.querySelector('#screen-survey button');
+                const loadingBtn = document.getElementById('surveySubmitBtn');
                 loadingBtn.innerText = "Gönderiliyor...";
                 loadingBtn.disabled = true;
 
@@ -751,13 +806,12 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    alert("✅ Veriler Başarıyla Öğretmenine Gönderildi!");
+                    alert("✅ Tebrikler! Öğretmenine gönderildi.");
                     location.reload();
                 }).catch(err => {
-                    alert("⚠️ Gönderim hatası oluştu. Lütfen tekrar dene.");
+                    alert("⚠️ Hata oluştu. İnternetini kontrol et.");
                     loadingBtn.innerText = "Tekrar Dene";
                     loadingBtn.disabled = false;
-                    console.error(err);
                 });
             },
 
