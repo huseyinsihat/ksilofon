@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. MODERN TASARIM SİSTEMİ --- */
+        /* --- 1. TASARIM SİSTEMİ (Vibrant & Clean) --- */
         :root {
             --bg-gradient: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
             --glass: rgba(255, 255, 255, 0.1);
@@ -22,7 +22,7 @@
             --c-sol: #1e90ff; --c-la: #5352ed; --c-si: #a55eea; --c-do2: #ff6b81;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; font-family: 'Nunito', sans-serif; outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; font-family: 'Nunito', sans-serif; }
         
         body {
             background: var(--bg-gradient); color: var(--text);
@@ -75,17 +75,9 @@
         .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .btn-red { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); }
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); box-shadow: none; margin-top: 5px;}
-        .btn:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(1); }
-
-        /* Anket Şıkları */
-        .survey-btn {
-            background: transparent; border: 2px solid rgba(255,255,255,0.3);
-            color: white; padding: 10px; margin: 0; border-radius: 10px;
-            cursor: pointer; font-weight: bold; width: 100%;
-        }
-        .survey-btn.selected { background: var(--accent); color: #2c3e50; border-color: var(--accent); }
 
         /* --- 5. OYUN ALANI --- */
+        /* Üst Bar (Bilgi Paneli) */
         .top-bar {
             width: 100%; display: flex; justify-content: space-between; align-items: center;
             padding: 10px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -95,6 +87,7 @@
             font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px;
         }
         
+        /* Görsel Hedef (Sahne Ortası) */
         .stage {
             flex: 1; width: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; position: relative;
@@ -111,6 +104,7 @@
         
         .instruction { font-size: 1.4rem; font-weight: 800; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
+        /* Flash Feedback (Ekran Parlaması) */
         #flash-layer {
             position: absolute; top:0; left:0; width:100%; height:100%;
             pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 5;
@@ -118,7 +112,7 @@
         .flash-success { background: radial-gradient(circle, rgba(46,213,115,0.3) 0%, transparent 70%); }
         .flash-error { background: radial-gradient(circle, rgba(255,71,87,0.3) 0%, transparent 70%); }
 
-        /* --- 6. TUŞLAR (3D) --- */
+        /* --- 6. TUŞLAR (3D & Fizik) --- */
         .keys-area {
             width: 100%; height: 42%; display: flex; gap: 6px; padding: 0 10px 10px 10px;
             align-items: flex-start;
@@ -137,10 +131,14 @@
             background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
         }
         .key:active, .key.pressed {
-            transform: translateY(8px); box-shadow: 0 0 0 rgba(0,0,0,0.3); filter: brightness(1.3);
+            transform: translateY(8px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.3);
+            filter: brightness(1.3);
         }
+        /* Kilitli Durum */
         .key.locked { filter: grayscale(0.8) brightness(0.7); pointer-events: none; }
 
+        /* Renk Atamaları */
         .key[data-note="do"] { background: var(--c-do); height: 100%; }
         .key[data-note="re"] { background: var(--c-re); height: 96%; }
         .key[data-note="mi"] { background: var(--c-mi); height: 92%; }
@@ -150,7 +148,7 @@
         .key[data-note="si"] { background: var(--c-si); height: 76%; }
         .key[data-note="do2"] { background: var(--c-do2); height: 72%; }
 
-        /* --- 7. MENÜ --- */
+        /* --- 7. MENÜ & LİSTE --- */
         .menu-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
             width: 100%; max-width: 600px; margin-top: 10px;
@@ -170,9 +168,13 @@
         }
         .song-row:hover { background: rgba(255,255,255,0.15); border-left-color: var(--accent); }
 
+        /* AI Güven Barı */
         #ai-bar-wrap { width: 100px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; }
         #ai-bar { height: 100%; width: 0%; background: var(--success); transition: width 0.1s; }
+
+        /* Konfeti */
         #confetti { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 10; }
+
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
@@ -188,7 +190,6 @@
 
     <div id="screen-login" class="screen active">
         <div class="card">
-            <img src="logo.png" style="width: 80px; height: 80px; margin-bottom: 15px; display: block; margin: 0 auto;" onerror="this.style.display='none'">
             <h1>Akıllı Ksilofon</h1>
             <p style="opacity: 0.7; margin-bottom: 20px;">TÜBİTAK 2204 Projesi</p>
             
@@ -217,7 +218,7 @@
         <div class="card" style="text-align: left; max-width: 600px;">
             <h2 id="surveyTitle" style="text-align: center; margin-bottom: 20px;">Anket</h2>
             <div id="surveyContent" style="max-height: 250px; overflow-y: auto;"></div>
-            <button id="btnGonder" class="btn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
+            <button class="btn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
         </div>
     </div>
 
@@ -297,11 +298,12 @@
                 
                 const freqs = {'do':261.63,'re':293.66,'mi':329.63,'fa':349.23,'sol':392.00,'la':440.00,'si':493.88,'do2':523.25};
                 osc.frequency.value = freqs[note];
-                osc.type = 'sine';
+                osc.type = 'sine'; // Saf ton
 
+                // Zarf (Envelope) - Vuruş Hissi
                 gain.gain.setValueAtTime(0, t);
-                gain.gain.linearRampToValueAtTime(0.8, t + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.0);
+                gain.gain.linearRampToValueAtTime(0.8, t + 0.01); // Attack
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.0); // Release
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -379,13 +381,14 @@
                 
                 this.user.name = n; this.user.age = a; this.user.class = c;
                 
+                // Sistemleri Başlat
                 AudioEngine.init();
                 FX.init();
                 this.renderKeys();
                 this.initAI();
                 
                 document.getElementById('txtWelcome').innerText = `Merhaba, ${n}`;
-                this.startSurvey('pre');
+                this.startSurvey('pre'); // Önce anket
             },
 
             // --- 2. Anket ---
@@ -404,10 +407,10 @@
                     
                     ['Evet', 'Kısmen', 'Hayır'].forEach(ans => {
                         const b = document.createElement('button');
-                        b.className = 'survey-btn'; b.innerText = ans; b.style.flex = '1';
+                        b.className = 'btn btn-outline'; b.style.margin = '0'; b.innerText = ans; b.style.flex = '1';
                         b.onclick = (e) => {
-                            Array.from(opts.children).forEach(k => k.classList.remove('selected'));
-                            e.target.classList.add('selected');
+                            Array.from(opts.children).forEach(k => k.style.background = 'transparent');
+                            e.target.style.background = '#f1c40f'; e.target.style.color = '#333';
                             if(type === 'pre') this.user.pre[i] = ans; else this.user.post[i] = ans;
                         };
                         opts.appendChild(b);
@@ -415,11 +418,6 @@
                     d.appendChild(opts);
                     cont.appendChild(d);
                 });
-                
-                // DÜZELTME: Buton metnini sıfırla
-                const btn = document.getElementById('btnGonder');
-                if(btn) { btn.innerText = "Kaydet ve Devam Et"; btn.disabled = false; }
-                
                 this.showScreen('screen-survey');
             },
 
@@ -428,7 +426,7 @@
                 const arr = t === 'pre' ? this.user.pre : this.user.post;
                 const req = t === 'pre' ? PRE_SURVEY.length : POST_SURVEY.length;
                 
-                if(arr.filter(a=>a).length < req) { alert("Lütfen tüm soruları cevaplayın."); return; }
+                if(arr.length < req) { alert("Lütfen tüm soruları cevaplayın."); return; }
                 
                 if(t === 'pre') this.showScreen('screen-menu');
                 else this.generateReport();
@@ -443,12 +441,21 @@
                 
                 document.getElementById('hudMode').innerText = mode.toUpperCase();
                 document.getElementById('hudScore').innerText = "0";
+                
+                // Kilitleri kaldır
                 document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
                 this.showScreen('screen-game');
 
-                if(mode === 'free') this.setVisual("Serbest Çalım", "🎹");
-                else if(mode === 'reflex') { this.setVisual("Hazırlan...", "⏳"); setTimeout(() => this.nextReflex(), 1500); }
-                else if(mode === 'rhythm') { this.setVisual("Dinle...", "👂"); this.game.rhythmPattern = this.generatePattern(3); setTimeout(() => this.playPattern(), 1000); }
+                if(mode === 'free') {
+                    this.setVisual("Serbest Çalım", "🎹");
+                } else if(mode === 'reflex') {
+                    this.setVisual("Hazırlan...", "⏳");
+                    setTimeout(() => this.nextReflex(), 1500);
+                } else if(mode === 'rhythm') {
+                    this.setVisual("Dinle...", "👂");
+                    this.game.rhythmPattern = this.generatePattern(3); // 3 nota ile başla
+                    setTimeout(() => this.playPattern(), 1000);
+                }
             },
 
             showSongs: function() {
@@ -458,7 +465,11 @@
                     const row = document.createElement('div');
                     row.className = 'song-row';
                     row.innerHTML = `<div><strong>${s.title}</strong><br><small>${s.level}</small></div><div>➤</div>`;
-                    row.onclick = () => { this.game.song = s; this.startMode('song'); this.nextSongNote(); };
+                    row.onclick = () => {
+                        this.game.song = s;
+                        this.startMode('song');
+                        this.nextSongNote();
+                    };
                     list.appendChild(row);
                 });
                 this.showScreen('screen-songs');
@@ -469,12 +480,15 @@
                 if(this.game.locked) return;
                 if(event) event.preventDefault();
 
+                // Fiziksel Tepki
                 AudioEngine.play(note);
                 if(navigator.vibrate) navigator.vibrate(40);
                 
+                // Görsel
                 el.classList.add('pressed');
                 setTimeout(() => el.classList.remove('pressed'), 150);
 
+                // Mantık
                 this.checkLogic(note);
             },
 
@@ -486,16 +500,26 @@
                 let correct = false;
                 let target = "";
 
+                // MODLAR
                 if(this.game.mode === 'song') {
                     target = this.game.song.notes[this.game.index];
                     if(note === target) {
-                        correct = true; this.game.score += 100; this.game.index++; this.flash('success');
+                        correct = true;
+                        this.game.score += 100;
+                        this.game.index++;
+                        this.flash('success');
+                        
                         if(this.game.index >= this.game.song.notes.length) {
-                            FX.explode(); this.setVisual("Şarkı Bitti!", "🎉");
-                            setTimeout(() => this.showScreen('screen-menu'), 3000); return;
+                            FX.explode();
+                            this.setVisual("Şarkı Bitti!", "🎉");
+                            setTimeout(() => this.showScreen('screen-menu'), 3000);
+                            return;
                         }
                         this.nextSongNote();
-                    } else { this.flash('error'); this.game.score = Math.max(0, this.game.score - 10); }
+                    } else {
+                        this.flash('error');
+                        this.game.score = Math.max(0, this.game.score - 10);
+                    }
                 } 
                 else if(this.game.mode === 'reflex') {
                     target = this.game.targetNote;
@@ -503,22 +527,30 @@
                         correct = true;
                         const pts = Math.max(0, 1000 - lat);
                         this.game.score += pts;
-                        this.showFeedback(`+${pts}`, true); this.flash('success');
+                        this.showFeedback(`+${pts}`, true);
+                        this.flash('success');
                         this.nextReflex();
-                    } else { this.flash('error'); }
+                    } else {
+                        this.flash('error');
+                    }
                 }
                 else if(this.game.mode === 'rhythm') {
                     target = this.game.rhythmPattern[this.game.index];
                     if(note === target) {
-                        correct = true; this.game.index++;
+                        correct = true;
+                        this.game.index++;
                         if(this.game.index >= this.game.rhythmPattern.length) {
-                            this.game.score += 500; this.showFeedback("Mükemmel!", true); FX.explode();
+                            this.game.score += 500;
+                            this.showFeedback("Mükemmel!", true);
+                            FX.explode();
+                            // Seviye Artır
                             const nextLen = this.game.rhythmPattern.length + 1;
                             this.game.rhythmPattern = this.generatePattern(nextLen);
                             setTimeout(() => this.playPattern(), 1500);
                         }
                     } else {
-                        this.showFeedback("Hata! Tekrar...", false); this.flash('error');
+                        this.showFeedback("Hata! Tekrar...", false);
+                        this.flash('error');
                         setTimeout(() => this.playPattern(), 1000);
                     }
                 }
@@ -527,26 +559,32 @@
                 this.logData(target, note, correct, lat);
             },
 
+            // --- Yardımcılar ---
             nextSongNote: function() {
                 const n = this.game.song.notes[this.game.index];
-                this.setVisual(`Bas: ${n.toUpperCase()}`, n.toUpperCase()); this.highlightKey(n);
+                this.setVisual(`Bas: ${n.toUpperCase()}`, n.toUpperCase());
+                this.highlightKey(n);
             },
 
             nextReflex: function() {
                 const notes = ['do','re','mi','fa','sol','la','si','do2'];
                 const n = notes[Math.floor(Math.random()*notes.length)];
-                this.game.targetNote = n; this.game.startT = Date.now();
-                this.setVisual("ŞİMDİ BAS!", n.toUpperCase()); this.highlightKey(n);
+                this.game.targetNote = n;
+                this.game.startT = Date.now();
+                this.setVisual("ŞİMDİ BAS!", n.toUpperCase());
+                this.highlightKey(n);
             },
 
             generatePattern: function(len) {
                 const notes = ['do','re','mi','fa','sol','la','si','do2'];
-                let p = []; for(let i=0; i<len; i++) p.push(notes[Math.floor(Math.random()*notes.length)]);
+                let p = [];
+                for(let i=0; i<len; i++) p.push(notes[Math.floor(Math.random()*notes.length)]);
                 return p;
             },
 
             playPattern: function() {
-                this.game.index = 0; this.game.locked = true;
+                this.game.index = 0;
+                this.game.locked = true;
                 this.setVisual("İzle ve Dinle", "👀");
                 document.querySelectorAll('.key').forEach(k => k.classList.add('locked'));
 
@@ -555,26 +593,34 @@
                     if(i >= this.game.rhythmPattern.length) {
                         this.game.locked = false;
                         document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
-                        this.setVisual("Sıra Sende!", "🫵"); return;
+                        this.setVisual("Sıra Sende!", "🫵");
+                        return;
                     }
                     const n = this.game.rhythmPattern[i];
                     const el = document.querySelector(`.key[data-note="${n}"]`);
-                    AudioEngine.play(n); el.classList.add('pressed');
+                    AudioEngine.play(n);
+                    el.classList.add('pressed');
                     setTimeout(() => el.classList.remove('pressed'), 200);
-                    i++; setTimeout(playNext, 600);
+                    i++;
+                    setTimeout(playNext, 600);
                 };
                 setTimeout(playNext, 500);
             },
 
             // --- UI ---
             renderKeys: function() {
-                const c = document.getElementById('keysContainer'); c.innerHTML = '';
+                const c = document.getElementById('keysContainer');
+                c.innerHTML = '';
                 const notes = ['do','re','mi','fa','sol','la','si','do2'];
                 const lbls = ['DO','RE','Mİ','FA','SOL','LA','Sİ',"DO'"];
                 notes.forEach((n, i) => {
-                    const k = document.createElement('div'); k.className = 'key'; k.setAttribute('data-note', n); k.innerText = lbls[i];
+                    const k = document.createElement('div');
+                    k.className = 'key'; k.setAttribute('data-note', n);
+                    k.innerText = lbls[i];
+                    
                     const hit = (e) => this.handleInput(n, k, e);
-                    k.addEventListener('touchstart', hit, {passive:false}); k.addEventListener('mousedown', hit);
+                    k.addEventListener('touchstart', hit, {passive:false});
+                    k.addEventListener('mousedown', hit);
                     c.appendChild(k);
                 });
             },
@@ -582,76 +628,142 @@
             setVisual: function(text, icon) {
                 document.getElementById('txtInstr').innerText = text;
                 const v = document.getElementById('visualTarget');
-                v.innerText = icon; v.classList.remove('active'); void v.offsetWidth; v.classList.add('active');
+                v.innerText = icon;
+                v.classList.remove('active');
+                void v.offsetWidth;
+                v.classList.add('active');
+                
+                // Renk güncelle
                 const map = {'DO':'#ff4757','RE':'#ffa502','Mİ':'#eccc68','FA':'#2ed573','SOL':'#1e90ff','LA':'#5352ed','Sİ':'#a55eea'};
-                v.style.backgroundColor = map[icon.substring(0,3)] || 'rgba(255,255,255,0.1)';
+                const clean = icon.length>3 ? icon.substring(0,3) : icon;
+                v.style.backgroundColor = map[clean] || 'rgba(255,255,255,0.1)';
             },
 
             highlightKey: function(note) {
                 document.querySelectorAll('.key').forEach(k => k.style.borderTop = 'none');
-                const k = document.querySelector(`.key[data-note="${note}"]`); if(k) k.style.borderTop = '8px solid white';
+                const k = document.querySelector(`.key[data-note="${note}"]`);
+                if(k) k.style.borderTop = '8px solid white';
             },
 
             flash: function(type) {
-                const l = document.getElementById('flash-layer'); l.className = type === 'success' ? 'flash-success' : 'flash-error';
-                l.style.opacity = '1'; setTimeout(() => l.style.opacity = '0', 200);
+                const l = document.getElementById('flash-layer');
+                l.className = type === 'success' ? 'flash-success' : 'flash-error';
+                l.style.opacity = '1';
+                setTimeout(() => l.style.opacity = '0', 200);
             },
 
             showFeedback: function(msg, good) {
-                const el = document.getElementById('feedbackTxt'); el.innerText = msg;
-                el.style.color = good ? '#2ecc71' : '#e74c3c'; setTimeout(() => el.innerText = '', 1000);
+                const el = document.getElementById('feedbackTxt');
+                el.innerText = msg;
+                el.style.color = good ? '#2ecc71' : '#e74c3c';
+                setTimeout(() => el.innerText = '', 1000);
             },
 
-            // --- AI ---
-            ai: null, lastAiTime: 0,
+            // --- AI (TEACHABLE MACHINE) ---
+            ai: null,
+            lastAiTime: 0,
             initAI: async function() {
                 try {
                     const URL = "https://teachablemachine.withgoogle.com/models/j_O73hRX5/";
                     this.ai = speechCommands.create("BROWSER_FFT", undefined, URL + "model.json", URL + "metadata.json");
                     await this.ai.ensureModelLoaded();
-                    document.getElementById('ai-status').innerText = "🎤 AI Hazır"; document.getElementById('ai-status').style.color = "#2ecc71";
+                    document.getElementById('ai-status').innerText = "🎤 AI Hazır";
+                    document.getElementById('ai-status').style.color = "#2ecc71";
+
                     this.ai.listen(res => {
                         if(!App.game.mode || App.game.locked) return;
-                        const scores = res.scores; const max = Math.max(...scores); const idx = scores.indexOf(max);
+
+                        const scores = res.scores;
+                        const max = Math.max(...scores);
+                        const idx = scores.indexOf(max);
                         const lbl = App.ai.wordLabels()[idx];
+
+                        // Güven Barı
                         document.getElementById('ai-bar').style.width = `${max*100}%`;
+
+                        // Smart Debounce & Threshold
                         if(max > 0.85 && lbl !== "Background Noise" && lbl !== "_unknown_") {
                             const now = Date.now();
-                            if(now - App.lastAiTime > 400) {
+                            // Farklı notaysa hemen, aynı notaysa 400ms bekle
+                            const isDifferent = lbl !== App.lastLabel;
+                            const timePassed = now - App.lastAiTime > 400;
+
+                            if(isDifferent || timePassed) {
                                 const k = document.querySelector(`.key[data-note="${lbl}"]`);
-                                if(k) App.handleInput(lbl, k, { preventDefault: ()=>{} });
+                                if(k) {
+                                    // Sanal Tetikleme
+                                    const rect = k.getBoundingClientRect();
+                                    App.handleInput(lbl, k, { 
+                                        clientX: rect.x + rect.width/2, 
+                                        clientY: rect.y + rect.height/2, 
+                                        preventDefault: ()=>{} 
+                                    });
+                                }
                                 App.lastAiTime = now;
+                                App.lastLabel = lbl;
                             }
                         }
                     }, { probabilityThreshold: 0.85, overlapFactor: 0.50 });
-                } catch(e) { document.getElementById('ai-status').innerText = "⚠️ Manuel Mod"; }
+
+                } catch(e) {
+                    document.getElementById('ai-status').innerText = "⚠️ Manuel Mod";
+                }
             },
 
-            // --- Veri ---
+            // --- Veri & Rapor ---
             logData: function(target, played, result, lat) {
-                this.user.logs.push({ time: new Date().toISOString(), mode: this.game.mode, target: target || '-', played: played, result: result ? 'DOGRU' : 'YANLIS', latency: lat });
+                this.user.logs.push({
+                    time: new Date().toISOString(),
+                    mode: this.game.mode,
+                    target: target || '-',
+                    played: played,
+                    result: result ? 'DOGRU' : 'YANLIS',
+                    latency: lat
+                });
+                localStorage.setItem('xylophone_bak_' + this.user.name, JSON.stringify(this.user));
             },
 
-            endSession: function() { this.startSurvey('post'); },
+            endSession: function() {
+                this.startSurvey('post');
+            },
 
             // --- VERİ GÖNDERME (BULUT) ---
             generateReport: function() {
-                const URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
-                const btn = document.getElementById('btnGonder');
-                if(btn) { btn.innerText = "Gönderiliyor..."; btn.disabled = true; }
+                // SİZİN VERDİĞİNİZ URL BURAYA EKLENDİ
+                const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
 
+                const loadingBtn = document.querySelector('#screen-survey button');
+                loadingBtn.innerText = "Gönderiliyor...";
+                loadingBtn.disabled = true;
+
+                // DÜZELTME BURADA: this.data YERİNE this.user KULLANILDI
                 const payload = {
-                    name: this.user.name, age: this.user.age, class: this.user.class, gender: this.user.gender,
-                    preAns: this.user.pre, postAns: this.user.post, logs: this.user.logs
+                    name: this.user.name,
+                    age: this.user.age,
+                    class: this.user.class,
+                    gender: this.user.gender,
+                    preAns: this.user.pre,
+                    postAns: this.user.post,
+                    logs: this.user.logs
                 };
 
-                fetch(URL, {
-                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+                // Google Script'e gönderim (no-cors için text/plain formatı)
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', 
+                    },
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    alert("✅ Veriler Başarıyla Gönderildi!"); location.reload();
+                    alert("✅ Veriler Başarıyla Öğretmenine Gönderildi!");
+                    localStorage.removeItem('xylophone_bak_' + this.user.name);
+                    location.reload();
                 }).catch(err => {
-                    alert("⚠️ Hata oluştu."); if(btn) { btn.innerText = "Tekrar Dene"; btn.disabled = false; }
+                    alert("⚠️ Gönderim hatası oluştu. Lütfen tekrar dene.");
+                    loadingBtn.innerText = "Tekrar Dene";
+                    loadingBtn.disabled = false;
+                    console.error(err);
                 });
             },
 
