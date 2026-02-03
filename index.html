@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#2c3e50">
+    <title>Akıllı Ksilofon - TÜBİTAK 2204</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. SIFIRLAMA VE TEMEL AYARLAR --- */
+        :root {
+            --bg-gradient: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+            --glass: rgba(255, 255, 255, 0.15); /* Cam efekti artırıldı */
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+            --text: #ffffff;
+            --accent: #f1c40f;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            
+            /* Nota Renkleri */
+            --c-do: #ff4757; --c-re: #ffa502; --c-mi: #eccc68; --c-fa: #2ed573;
+            --c-sol: #1e90ff; --c-la: #5352ed; --c-si: #a55eea; --c-do2: #ff6b81;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; font-family: 'Nunito', sans-serif; }
+        
+        /* Dark Mode Engeli: Telefonun ayarı ne olursa olsun renkleri koru */
+        :root { color-scheme: light; }
+
+        body {
+            background: var(--bg-gradient); color: var(--text);
+            height: 100vh; height: 100svh; /* Mobil tarayıcı çubuğu sorunu çözümü (Small Viewport Height) */
+            width: 100vw; overflow: hidden;
+            display: flex; flex-direction: column;
+            /* iPhone Çentik (Notch) Koruması */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            /* Sayfa yenileme (Pull-to-refresh) engeli */
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+
+        /* --- 2. CİHAZ YÖNÜ UYARISI --- */
+        #orientation-lock {
+            display: none; position: fixed; z-index: 9999;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .rotate-icon { font-size: 4rem; animation: spin 2s infinite ease-in-out; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+        /* Sadece dikey modda göster */
+        @media screen and (orientation: portrait) { #orientation-lock { display: flex; } }
+
+        /* --- 3. EKRAN DÜZENİ --- */
+        .screen {
+            display: none; flex: 1; flex-direction: column;
+            align-items: center; justify-content: center;
+            width: 100%; height: 100%; 
+            padding: 10px;
+            overflow-y: auto; /* Sığmazsa kaydır */
+            animation: fadeUp 0.3s ease-out;
+        }
+        .screen.active { display: flex; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 4. KART TASARIMI (Login & Anket) --- */
+        .card {
+            background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: var(--border); border-radius: 16px; padding: 20px;
+            width: 95%; max-width: 500px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            flex-shrink: 0; transition: all 0.3s ease;
+        }
+
+        .input-box {
+            width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px;
+            background: rgba(255,255,255,0.95); font-size: 1rem; color: #333; font-weight: 700;
+            outline: none;
+        }
+        .input-box:focus { box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.5); }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white; border: none; padding: 12px; border-radius: 50px;
+            font-size: 1.1rem; font-weight: 800; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); margin-top: 10px; width: 100%;
+            transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        .btn-red { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); }
+        .btn-outline { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: none; margin-top: 0;}
+        .btn-outline.selected { background: var(--accent); color: #333; border-color: var(--accent); }
+
+        /* --- 5. İDEAL MOBİL OPTİMİZASYONU (Yatay & Dar Ekran) --- */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            /* Login ekranını süper kompakt yap */
+            #screen-login .card {
+                padding: 10px 15px;
+                display: flex; flex-direction: row; flex-wrap: wrap; /* Yan yana diz */
+                align-items: center; justify-content: center; gap: 8px;
+                max-width: 700px;
+            }
+            /* Logoyu ve Alt Başlığı GİZLE (Yer kazanmak için en önemli adım) */
+            #screen-login .logo-img, #screen-login .sub-title { display: none !important; }
+            #screen-login h1 { font-size: 1.2rem; width: 100%; margin: 0; display: none; } /* Başlığı da gizle, sadece form kalsın */
+            
+            /* Form elemanlarını yan yana diz */
+            .form-row { display: flex; width: 100%; gap: 8px; }
+            .input-box { margin: 0; padding: 8px; font-size: 0.9rem; }
+            
+            /* Butonlar */
+            .gender-group { width: auto !important; flex: 1; display: flex; gap: 5px; margin: 0 !important; }
+            .btn { padding: 8px; font-size: 1rem; margin: 0; width: 100%; }
+        }
+
+        /* --- 6. ANKET İYİLEŞTİRMESİ (Emoji Butonları) --- */
+        .survey-item { margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; }
+        .survey-q { font-weight: bold; margin-bottom: 8px; font-size: 1rem; }
+        .survey-opts { display: flex; justify-content: space-between; gap: 8px; }
+        .opt-btn { 
+            flex: 1; font-size: 1.5rem; padding: 5px; 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .opt-btn.active { background: var(--accent); transform: scale(1.1); border-color: white; }
+
+        /* --- 7. OYUN ALANI --- */
+        .top-bar {
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 15px; background: rgba(0,0,0,0.3); 
+            height: 40px; flex-shrink: 0;
+        }
+        .stat-pill { background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        
+        .stage {
+            flex: 1; width: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; position: relative;
+        }
+        .target-bubble {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 4px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; font-weight: 900; color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
+        }
+        .target-bubble.active { transform: scale(1.2); border-color: white; background: rgba(255,255,255,0.2); }
+        .instruction { font-size: 1.2rem; font-weight: 800; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+
+        /* --- 8. TUŞLAR (Responsive Yükseklik) --- */
+        .keys-area {
+            width: 100%; height: 45%; /* Ekranın %45'i tuşlara ayrıldı */
+            display: flex; gap: 4px; padding: 0 5px 5px 5px;
+            align-items: flex-start; flex-shrink: 0;
+        }
+        .key {
+            flex: 1; height: 100%; position: relative; cursor: pointer;
+            border-radius: 0 0 8px 8px; background: #ccc;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3), inset 0 2px 3px rgba(255,255,255,0.4);
+            display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 8px; font-weight: 900; font-size: 0.9rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5); overflow: hidden;
+            touch-action: none; /* Kaydırmayı engeller, hızlı tepki verir */
+        }
+        .key:active, .key.pressed { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.3); filter: brightness(1.2); }
+        .key.locked { filter: grayscale(0.9); opacity: 0.7; pointer-events: none; }
+
+        /* Tuş Renkleri */
+        .key[data-note="do"] { background: var(--c-do); height: 100%; }
+        .key[data-note="re"] { background: var(--c-re); height: 96%; }
+        .key[data-note="mi"] { background: var(--c-mi); height: 92%; }
+        .key[data-note="fa"] { background: var(--c-fa); height: 88%; }
+        .key[data-note="sol"] { background: var(--c-sol); height: 84%; }
+        .key[data-note="la"] { background: var(--c-la); height: 80%; }
+        .key[data-note="si"] { background: var(--c-si); height: 76%; }
+        .key[data-note="do2"] { background: var(--c-do2); height: 72%; }
+
+        /* --- MENÜ --- */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+        .menu-item { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; }
+        .menu-item:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); }
+        
+        /* Şarkı Satırı */
+        .song-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.1); padding: 12px; margin-bottom: 6px;
+            border-radius: 8px; cursor: pointer; border-left: 4px solid transparent;
+        }
+        .song-row:hover { background: rgba(255,255,255,0.2); border-left-color: var(--accent); }
+
+        /* Efektler */
+        #flash-layer { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 5; }
+        .flash-success { background: radial-gradient(circle, rgba(46,213,115,0.4) 0%, transparent 70%); }
+        .flash-error { background: radial-gradient(circle, rgba(255,71,87,0.4) 0%, transparent 70%); }
+        #confetti { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 10; }
+
+        /* Tam Ekran Butonu */
+        #fullscreen-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 6px 12px; border-radius: 20px;
+            font-size: 0.75rem; cursor: pointer; backdrop-filter: blur(4px);
+        }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+</head>
+<body>
+
+    <div id="orientation-lock">
+        <div class="rotate-icon">📱</div>
+        <h2>Telefonu Yan Çevirin</h2>
+    </div>
+
+    <button id="fullscreen-btn" onclick="toggleFullScreen()">⛶ Tam Ekran</button>
+
+    <div id="screen-login" class="screen active">
+        <div class="card">
+            <img src="logo.png" class="logo-img" style="width: 70px; height: 70px; margin-bottom: 5px;" onerror="this.style.display='none'">
+            <h1 style="margin-bottom: 5px;">Akıllı Ksilofon</h1>
+            <p class="sub-title" style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 15px;">TÜBİTAK 2204 Projesi</p>
+            
+            <div class="form-row">
+                <input type="text" id="uName" class="input-box" placeholder="Ad Soyad" style="flex: 2;">
+                <input type="tel" id="uAge" class="input-box" placeholder="Yaş" style="flex: 1;"> </div>
+            
+            <div class="form-row">
+                <select id="uClass" class="input-box" style="flex: 1.5;">
+                    <option value="">Sınıf</option>
+                    <option value="5">5. Sınıf</option>
+                    <option value="6">6. Sınıf</option>
+                    <option value="7">7. Sınıf</option>
+                    <option value="BILSEM">BİLSEM</option>
+                </select>
+                
+                <div class="gender-group" style="flex: 2; display: flex; gap: 5px; margin-left: 5px;">
+                    <button class="btn btn-outline" style="flex:1;" onclick="App.setGender('Kız', this)">👧</button>
+                    <button class="btn btn-outline" style="flex:1;" onclick="App.setGender('Erkek', this)">👦</button>
+                </div>
+            </div>
+
+            <button class="btn btn-green" onclick="App.login()">BAŞLA 🚀</button>
+        </div>
+    </div>
+
+    <div id="screen-survey" class="screen">
+        <div class="card" style="text-align: left; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+            <h2 id="surveyTitle" style="text-align: center; margin-bottom: 10px; font-size: 1.2rem;">Anket</h2>
+            <div id="surveyContent" style="overflow-y: auto; padding-right: 5px; flex: 1;"></div>
+            <button class="btn" id="surveySubmitBtn" onclick="App.submitSurvey()">Kaydet ve Devam Et</button>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:600px; margin-bottom:10px;">
+            <div>
+                <h2 id="txtWelcome" style="font-size:1.3rem;">Merhaba</h2>
+                <div id="ai-status" style="font-size:0.8rem; color:var(--accent);">🎤 AI Yükleniyor...</div>
+            </div>
+            <button class="btn btn-red btn-outline" style="width: auto; padding: 5px 15px; font-size: 0.8rem;" onclick="App.endSession()">Çıkış</button>
+        </div>
+
+        <div class="menu-grid" style="max-width: 600px;">
+            <div class="menu-item" onclick="App.startMode('free')">
+                <span style="font-size: 2rem;">🎹</span>
+                <h3>Serbest</h3>
+            </div>
+            <div class="menu-item" onclick="App.startMode('reflex')">
+                <span style="font-size: 2rem;">⚡</span>
+                <h3>Refleks</h3>
+            </div>
+            <div class="menu-item" onclick="App.startMode('rhythm')">
+                <span style="font-size: 2rem;">🧠</span>
+                <h3>Hafıza</h3>
+            </div>
+            <div class="menu-item" onclick="App.showSongs()">
+                <span style="font-size: 2rem;">🎵</span>
+                <h3>Şarkılar</h3>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-songs" class="screen">
+        <h2 style="margin-bottom: 10px;">Şarkı Seç</h2>
+        <div id="songList" style="width:100%; max-width:600px; overflow-y:auto; flex:1;"></div>
+        <button class="btn btn-outline" style="width:auto; margin-top: 10px;" onclick="App.showScreen('screen-menu')">Geri</button>
+    </div>
+
+    <div id="screen-game" class="screen" style="padding:0; justify-content:flex-start;">
+        <canvas id="confetti"></canvas>
+        <div id="flash-layer"></div>
+
+        <div class="top-bar">
+            <button class="btn btn-red" style="width:auto; margin:0; padding:4px 12px; font-size:0.75rem;" onclick="App.quitGame()">ÇIKIŞ</button>
+            <div class="stat-pill">MOD: <span id="hudMode">-</span></div>
+            <div class="stat-pill" style="color:var(--accent);">PUAN: <span id="hudScore">0</span></div>
+        </div>
+
+        <div class="stage">
+            <div id="txtInstr" class="instruction">Hazır mısın?</div>
+            <div id="visualTarget" class="target-bubble">🎵</div>
+            <div id="feedbackTxt" style="height:20px; margin-top:5px; font-weight:bold; color:var(--success);"></div>
+        </div>
+
+        <div class="keys-area" id="keysContainer"></div>
+    </div>
+
+    <script>
+        // --- TAM EKRAN FONKSİYONU ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Hata: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // --- A. SES MOTORU (Polyphonic) ---
+        const AudioEngine = {
+            ctx: null,
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+            play: function(note) {
+                if(!this.ctx) this.init();
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                const freqs = {'do':261.63,'re':293.66,'mi':329.63,'fa':349.23,'sol':392.00,'la':440.00,'si':493.88,'do2':523.25};
+                osc.frequency.value = freqs[note];
+                osc.type = 'sine';
+                
+                // Yumuşak vuruş sesi (ADSR)
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.8, t + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(t);
+                osc.stop(t + 1.2);
+            }
+        };
+
+        // --- B. VERİ VE İÇERİK ---
+        const SONGS = [
+            { title: "Daha Dün Annemizin", level: "Kolay", notes: ['do','do','sol','sol','la','la','sol','fa','fa','mi','mi','re','re','do'] },
+            { title: "Bak Postacı Geliyor", level: "Kolay", notes: ['sol','mi','mi','fa','re','re','do','re','mi','fa','sol','sol'] },
+            { title: "İzmir Marşı", level: "Orta", notes: ['do','mi','sol','la','la','sol','mi','fa','re','mi','fa','sol'] },
+            { title: "23 Nisan", level: "Zor", notes: ['sol','sol','la','sol','fa','mi','sol','sol','la','sol','fa','mi','re'] }
+        ];
+
+        const PRE_SURVEY = ["Müzik derslerini seviyor musun?", "Daha önce enstrüman çaldın mı?", "Teknoloji ile müzik ilgini çekiyor mu?"];
+        const POST_SURVEY = ["Uygulamayı sevdin mi?", "Reflekslerinin hızlandığını hissettin mi?", "Tekrar oynamak ister misin?"];
+
+        const NOTE_LABELS = {
+            do: 'DO',
+            re: 'RE',
+            mi: 'Mİ',
+            fa: 'FA',
+            sol: 'SOL',
+            la: 'LA',
+            si: 'Sİ',
+            do2: "DO'"
+        };
+
+        const NOTE_COLORS = {
+            do: 'var(--c-do)',
+            re: 'var(--c-re)',
+            mi: 'var(--c-mi)',
+            fa: 'var(--c-fa)',
+            sol: 'var(--c-sol)',
+            la: 'var(--c-la)',
+            si: 'var(--c-si)',
+            do2: 'var(--c-do2)'
+        };
+
+        // --- C. EFEKT SİSTEMİ ---
+        const FX = {
+            canvas: document.getElementById('confetti'),
+            ctx: null,
+            particles: [],
+            init: function() {
+                this.ctx = this.canvas.getContext('2d');
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.loop();
+            },
+            resize: function() {
+                // Retina ekranlar için piksel yoğunluğu ayarı
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = window.innerWidth * dpr;
+                this.canvas.height = window.innerHeight * dpr;
+                this.canvas.style.width = `${window.innerWidth}px`;
+                this.canvas.style.height = `${window.innerHeight}px`;
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            },
+            explode: function() {
+                for(let i=0; i<60; i++) {
+                    this.particles.push({
+                        x: window.innerWidth/2, y: window.innerHeight/2,
+                        vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
+                        life: 1.0, color: `hsl(${Math.random()*360}, 100%, 50%)`
+                    });
+                }
+            },
+            loop: function() {
+                if(!this.ctx) return;
+                this.ctx.clearRect(0,0, window.innerWidth, window.innerHeight); // Doğru temizleme
+                for(let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.fillRect(p.x, p.y, 8, 8);
+                    if(p.life <= 0) this.particles.splice(i,1);
+                }
+                this.ctx.globalAlpha = 1;
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        // --- D. UYGULAMA ÇEKİRDEĞİ ---
+        const App = {
+            user: { name:'', age:'', gender:'', class:'', pre:[], post:[], logs:[] },
+            game: { mode: null, score: 0, index: 0, song: null, locked: false, startT: 0, rhythmPattern: [] },
+
+            // --- 1. Başlangıç ---
+            setGender: function(g, btn) {
+                this.user.gender = g;
+                // Görsel seçim efekti
+                document.querySelectorAll('.gender-group .btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            },
+
+            login: function() {
+                const n = document.getElementById('uName').value;
+                const a = document.getElementById('uAge').value;
+                const c = document.getElementById('uClass').value;
+                
+                if(!n || !a || !c || !this.user.gender) { alert("Lütfen tüm alanları doldurunuz."); return; }
+                
+                this.user.name = n; this.user.age = a; this.user.class = c;
+                
+                AudioEngine.init();
+                FX.init();
+                this.renderKeys();
+                this.initAI();
+                
+                document.getElementById('txtWelcome').innerText = `Merhaba, ${n.split(' ')[0]}`;
+                this.startSurvey('pre');
+                
+                // Otomatik Tam Ekran İsteği
+                if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+            },
+
+            // --- 2. Anket (İkonlu) ---
+            startSurvey: function(type) {
+                this.game.surveyType = type;
+                document.getElementById('surveyTitle').innerText = type === 'pre' ? "Başlangıç Anketi" : "Bitiş Anketi";
+                const cont = document.getElementById('surveyContent');
+                cont.innerHTML = '';
+                const qs = type === 'pre' ? PRE_SURVEY : POST_SURVEY;
+                
+                qs.forEach((q, i) => {
+                    const d = document.createElement('div');
+                    d.className = 'survey-item';
+                    
+                    const qText = document.createElement('div');
+                    qText.className = 'survey-q';
+                    qText.innerText = `${i+1}. ${q}`;
+                    d.appendChild(qText);
+                    
+                    const opts = document.createElement('div');
+                    opts.className = 'survey-opts';
+                    
+                    // İkonlar: Evet, Kısmen, Hayır
+                    const icons = [
+                        { val: 'Evet', icon: '👍' },
+                        { val: 'Kısmen', icon: '😐' },
+                        { val: 'Hayır', icon: '👎' }
+                    ];
+
+                    icons.forEach(item => {
+                        const b = document.createElement('div');
+                        b.className = 'opt-btn';
+                        b.innerText = item.icon;
+                        b.onclick = (e) => {
+                            // Seçim Efekti
+                            Array.from(opts.children).forEach(k => k.classList.remove('active'));
+                            b.classList.add('active');
+                            
+                            if(type === 'pre') this.user.pre[i] = item.val; 
+                            else this.user.post[i] = item.val;
+                        };
+                        opts.appendChild(b);
+                    });
+                    d.appendChild(opts);
+                    cont.appendChild(d);
+                });
+                this.showScreen('screen-survey');
+            },
+
+            submitSurvey: function() {
+                const t = this.game.surveyType;
+                const arr = t === 'pre' ? this.user.pre : this.user.post;
+                const req = t === 'pre' ? PRE_SURVEY.length : POST_SURVEY.length;
+                
+                // Boş cevap kontrolü
+                let missing = 0;
+                for(let i=0; i<req; i++) if(!arr[i]) missing++;
+                
+                if(missing > 0) { alert("Lütfen tüm soruları işaretleyin."); return; }
+                
+                if(t === 'pre') this.showScreen('screen-menu');
+                else this.generateReport();
+            },
+
+            // --- 3. Modlar ---
+            startMode: function(mode) {
+                this.game.mode = mode;
+                this.game.score = 0;
+                this.game.index = 0;
+                this.game.locked = false;
+                
+                document.getElementById('hudMode').innerText = mode.toUpperCase().substring(0,3);
+                document.getElementById('hudScore').innerText = "0";
+                document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
+                
+                this.showScreen('screen-game');
+
+                if(mode === 'free') {
+                    this.setVisual("Serbest", "🎹");
+                } else if(mode === 'reflex') {
+                    this.setVisual("Hazır?", "⏳");
+                    setTimeout(() => this.nextReflex(), 1500);
+                } else if(mode === 'rhythm') {
+                    this.setVisual("Dinle", "👂");
+                    this.game.rhythmPattern = this.generatePattern(3);
+                    setTimeout(() => this.playPattern(), 1000);
+                }
+            },
+
+            showSongs: function() {
+                const list = document.getElementById('songList');
+                list.innerHTML = '';
+                SONGS.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = 'song-row';
+                    row.innerHTML = `<div><strong>${s.title}</strong><br><small style="opacity:0.7">${s.level}</small></div><div>▶</div>`;
+                    row.onclick = () => {
+                        this.game.song = s;
+                        this.startMode('song');
+                        this.nextSongNote();
+                    };
+                    list.appendChild(row);
+                });
+                this.showScreen('screen-songs');
+            },
+
+            // --- 4. Oyun Döngüsü ---
+            handleInput: function(note, el, event) {
+                if(this.game.locked) return;
+                if(event && event.cancelable) event.preventDefault(); // Scroll engelle
+
+                AudioEngine.play(note);
+                if(navigator.vibrate) navigator.vibrate(30);
+                
+                // Basılma Efekti
+                el.classList.add('pressed');
+                setTimeout(() => el.classList.remove('pressed'), 150);
+
+                this.checkLogic(note);
+            },
+
+            checkLogic: function(note) {
+                if(this.game.mode === 'free') return;
+
+                const now = Date.now();
+                const lat = this.game.startT ? (now - this.game.startT) : 0;
+                let correct = false;
+                let target = "";
+
+                if(this.game.mode === 'song') {
+                    target = this.game.song.notes[this.game.index];
+                    if(note === target) {
+                        correct = true;
+                        this.game.score += 100;
+                        this.game.index++;
+                        this.flash('success');
+                        
+                        if(this.game.index >= this.game.song.notes.length) {
+                            FX.explode();
+                            this.setVisual("Bitti!", "🎉");
+                            setTimeout(() => this.showScreen('screen-menu'), 3000);
+                            return;
+                        }
+                        this.nextSongNote();
+                    } else {
+                        this.flash('error');
+                        this.game.score = Math.max(0, this.game.score - 10);
+                    }
+                } 
+                else if(this.game.mode === 'reflex') {
+                    target = this.game.targetNote;
+                    if(note === target) {
+                        correct = true;
+                        const pts = Math.max(0, 1000 - lat);
+                        this.game.score += pts;
+                        this.showFeedback(`+${pts}`, true);
+                        this.flash('success');
+                        this.nextReflex();
+                    } else {
+                        this.flash('error');
+                    }
+                }
+                else if(this.game.mode === 'rhythm') {
+                    target = this.game.rhythmPattern[this.game.index];
+                    if(note === target) {
+                        correct = true;
+                        this.game.index++;
+                        if(this.game.index >= this.game.rhythmPattern.length) {
+                            this.game.score += 500;
+                            this.showFeedback("Süper!", true);
+                            FX.explode();
+                            const nextLen = this.game.rhythmPattern.length + 1;
+                            this.game.rhythmPattern = this.generatePattern(nextLen);
+                            setTimeout(() => this.playPattern(), 1500);
+                        }
+                    } else {
+                        this.showFeedback("Tekrar", false);
+                        this.flash('error');
+                        setTimeout(() => this.playPattern(), 1000);
+                    }
+                }
+
+                document.getElementById('hudScore').innerText = this.game.score;
+                this.logData(target, note, correct, lat);
+            },
+
+            // --- Yardımcılar ---
+            nextSongNote: function() {
+                const n = this.game.song.notes[this.game.index];
+                const label = NOTE_LABELS[n] || n.toUpperCase();
+                this.setVisual(`Bas: ${label}`, label, n);
+                this.highlightKey(n);
+            },
+
+            nextReflex: function() {
+                const notes = ['do','re','mi','fa','sol','la','si','do2'];
+                const n = notes[Math.floor(Math.random()*notes.length)];
+                this.game.targetNote = n;
+                this.game.startT = Date.now();
+                const label = NOTE_LABELS[n] || n.toUpperCase();
+                this.setVisual("BAS!", label, n);
+                this.highlightKey(n);
+            },
+
+            generatePattern: function(len) {
+                const notes = ['do','re','mi','fa','sol','la','si','do2'];
+                let p = [];
+                for(let i=0; i<len; i++) p.push(notes[Math.floor(Math.random()*notes.length)]);
+                return p;
+            },
+
+            playPattern: function() {
+                this.game.index = 0;
+                this.game.locked = true;
+                this.setVisual("Dinle", "👀");
+                document.querySelectorAll('.key').forEach(k => k.classList.add('locked'));
+
+                let i = 0;
+                const playNext = () => {
+                    if(i >= this.game.rhythmPattern.length) {
+                        this.game.locked = false;
+                        document.querySelectorAll('.key').forEach(k => k.classList.remove('locked'));
+                        this.setVisual("Sen!", "🫵");
+                        return;
+                    }
+                    const n = this.game.rhythmPattern[i];
+                    const el = document.querySelector(`.key[data-note="${n}"]`);
+                    AudioEngine.play(n);
+                    el.classList.add('pressed');
+                    setTimeout(() => el.classList.remove('pressed'), 200);
+                    i++;
+                    setTimeout(playNext, 600);
+                };
+                setTimeout(playNext, 500);
+            },
+
+            // --- Görsel UI ---
+            renderKeys: function() {
+                const c = document.getElementById('keysContainer');
+                c.innerHTML = '';
+                const notes = ['do','re','mi','fa','sol','la','si','do2'];
+                notes.forEach((n) => {
+                    const k = document.createElement('div');
+                    k.className = 'key'; k.setAttribute('data-note', n);
+                    k.innerText = NOTE_LABELS[n] || n.toUpperCase();
+                    
+                    const hit = (e) => this.handleInput(n, k, e);
+                    if(window.PointerEvent) {
+                        k.addEventListener('pointerdown', hit);
+                    } else {
+                        k.addEventListener('touchstart', hit, {passive:false});
+                        k.addEventListener('mousedown', hit);
+                    }
+                    c.appendChild(k);
+                });
+            },
+
+            setVisual: function(text, icon, noteKey) {
+                document.getElementById('txtInstr').innerText = text;
+                const v = document.getElementById('visualTarget');
+                v.innerText = icon;
+                v.classList.remove('active');
+                void v.offsetWidth; // Trigger reflow
+                v.classList.add('active');
+                
+                let bg = 'rgba(255,255,255,0.1)';
+                if(noteKey && NOTE_COLORS[noteKey]) bg = NOTE_COLORS[noteKey];
+                v.style.backgroundColor = bg;
+            },
+
+            highlightKey: function(note) {
+                document.querySelectorAll('.key').forEach(k => k.style.borderTop = 'none');
+                const k = document.querySelector(`.key[data-note="${note}"]`);
+                if(k) k.style.borderTop = '8px solid white';
+            },
+
+            flash: function(type) {
+                const l = document.getElementById('flash-layer');
+                l.className = type === 'success' ? 'flash-success' : 'flash-error';
+                l.style.opacity = '1';
+                setTimeout(() => l.style.opacity = '0', 200);
+            },
+
+            showFeedback: function(msg, good) {
+                const el = document.getElementById('feedbackTxt');
+                el.innerText = msg;
+                el.style.color = good ? '#2ecc71' : '#e74c3c';
+                setTimeout(() => el.innerText = '', 800);
+            },
+
+            // --- AI (Teachable Machine) ---
+            ai: null,
+            lastAiTime: 0,
+            initAI: async function() {
+                try {
+                    const URL = "https://teachablemachine.withgoogle.com/models/j_O73hRX5/";
+                    this.ai = speechCommands.create("BROWSER_FFT", undefined, URL + "model.json", URL + "metadata.json");
+                    await this.ai.ensureModelLoaded();
+                    document.getElementById('ai-status').innerText = "🎤 AI Hazır";
+                    document.getElementById('ai-status').style.color = "#2ecc71";
+
+                    this.ai.listen(res => {
+                        if(!App.game.mode || App.game.locked) return;
+
+                        const scores = res.scores;
+                        const max = Math.max(...scores);
+                        const idx = scores.indexOf(max);
+                        const lbl = App.ai.wordLabels()[idx];
+
+                        if(max > 0.85 && lbl !== "Background Noise" && lbl !== "_unknown_") {
+                            const now = Date.now();
+                            const isDifferent = lbl !== App.lastLabel;
+                            const timePassed = now - App.lastAiTime > 400;
+
+                            if(isDifferent || timePassed) {
+                                const k = document.querySelector(`.key[data-note="${lbl}"]`);
+                                if(k) {
+                                    const rect = k.getBoundingClientRect();
+                                    App.handleInput(lbl, k, { 
+                                        clientX: rect.x + rect.width/2, 
+                                        clientY: rect.y + rect.height/2, 
+                                        preventDefault: ()=>{} 
+                                    });
+                                }
+                                App.lastAiTime = now;
+                                App.lastLabel = lbl;
+                            }
+                        }
+                    }, { probabilityThreshold: 0.85, overlapFactor: 0.50 });
+                } catch(e) {
+                    document.getElementById('ai-status').innerText = "⚠️ Manuel";
+                }
+            },
+
+            // --- Veri Kaydı ---
+            logData: function(target, played, result, lat) {
+                this.user.logs.push({
+                    time: new Date().toISOString(),
+                    mode: this.game.mode,
+                    target: target || '-',
+                    played: played,
+                    result: result ? 'DOGRU' : 'YANLIS',
+                    latency: lat
+                });
+            },
+
+            endSession: function() {
+                this.startSurvey('post');
+            },
+
+            // --- BULUT GÖNDERİMİ (Google Apps Script) ---
+            generateReport: function() {
+                // SİZİN URL'NİZ
+                const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIfwxI0onmO0aqLXDYGD2afUdvr7obyMYv-xgId83y36D6w1n7-YqGKRSBr7sdg5fo/exec";
+
+                const loadingBtn = document.getElementById('surveySubmitBtn');
+                loadingBtn.innerText = "Gönderiliyor...";
+                loadingBtn.disabled = true;
+
+                const payload = {
+                    name: this.user.name,
+                    age: this.user.age,
+                    class: this.user.class,
+                    gender: this.user.gender,
+                    preAns: this.user.pre,
+                    postAns: this.user.post,
+                    logs: this.user.logs
+                };
+
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    alert("✅ Tebrikler! Öğretmenine gönderildi.");
+                    location.reload();
+                }).catch(err => {
+                    alert("⚠️ Hata oluştu. İnternetini kontrol et.");
+                    loadingBtn.innerText = "Tekrar Dene";
+                    loadingBtn.disabled = false;
+                });
+            },
+
+            showScreen: function(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+            quitGame: function() { this.game.mode = null; this.showScreen('screen-menu'); }
+        };
+    </script>
+</body>
+</html>
